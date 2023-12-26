@@ -1,0 +1,27 @@
+server:
+  port: 8181
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/diplom
+    username: diplom
+    password: diplom
+  jpa:
+    database: postgresql
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: true
+    show-sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+jwt:
+  secret: tokensecretmorethan256bitsTokensecretmorethan256bits
+  expiration: 86400000

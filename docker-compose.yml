@@ -1,0 +1,37 @@
+version: '3.5'
+
+services:
+  db:
+    container_name: diplom-db
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: diplom
+      POSTGRES_USER: diplom
+      POSTGRES_PASSWORD: diplom
+    ports:
+      - "5432:5432"
+
+  backend:
+    container_name: diplom-backend
+    build:
+      context: ./
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db/diplom
+      SPRING_DATASOURCE_USERNAME: diplom
+      SPRING_DATASOURCE_PASSWORD: diplom
+    depends_on:
+      - db
+    ports:
+      - "8181:8181"
+
+  frontend:
+    container_name: diplom-frontend
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    environment:
+      VUE_APP_BASE_URL: http://localhost:8181
+    depends_on:
+      - backend
+    ports:
+      - "8080:8080"
