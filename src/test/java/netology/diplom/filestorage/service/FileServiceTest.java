@@ -48,7 +48,7 @@ public class FileServiceTest {
 
         assertNotNull(file.getFileData());
         assertNotNull(file.getFileType());
-        assertNotNull(file.getFilename());
+        assertNotNull(file.getFileName());
     }
 
     @Test

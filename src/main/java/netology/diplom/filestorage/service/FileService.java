@@ -38,10 +38,11 @@ public class FileService {
             hash = checksum(file);
             fileData = file.getBytes();
         } catch (NoSuchAlgorithmException | IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
 
         if (fileRepository.findFileByHash(hash).isPresent()) {
+            log.warn("Файл с данным хэшом уже существует.");
             return;
         }
 
@@ -54,6 +55,7 @@ public class FileService {
                 .build();
 
         fileRepository.save(createdFile);
+        log.info("Файл создан = {}", createdFile);
     }
 
     private String checksum(MultipartFile file) throws NoSuchAlgorithmException, IOException {
@@ -62,15 +64,10 @@ public class FileService {
         return new BigInteger(1, hash).toString(16);
     }
 
-    public FileDto getFile(String fileName) {
-        File file = fileRepository.findFileByFileName(fileName)
+    public File getFile(String fileName) {
+        log.info("Поиск файла по названию = {}", fileName);
+        return fileRepository.findFileByFileName(fileName)
                 .orElseThrow(() -> new FileNotFoundException("Файл с именем: { " + fileName + " } не найден"));
-
-        return FileDto.builder()
-                .filename(file.getFileName())
-                .fileType(file.getFileType())
-                .fileData(file.getFileData())
-                .build();
     }
 
     @Transactional
@@ -79,20 +76,21 @@ public class FileService {
                 .orElseThrow(() -> new FileNotFoundException("Файл с именем: { " + fileName + " } не найден"));
         fileToRename.setFileName(fileBody.getFilename());
         fileRepository.save(fileToRename);
+        log.info("Файл переименован = {}", fileName);
     }
 
     @Transactional
     public void deleteFile(String fileName) {
+        log.info("Удаление файла с именем = {}", fileName);
         File fileFromStorage = fileRepository.findFileByFileName(fileName)
                 .orElseThrow(() -> new FileNotFoundException("Файл с именем: { " + fileName + " } не найден"));
 
         fileRepository.deleteById(fileFromStorage.getId());
     }
 
-    public List<FileDto> getAllFiles(int limit) {
-        return fileRepository.findFilesWithLimit(limit)
-                .stream()
-                .map(FileService::mapFile).collect(Collectors.toList());
+    public List<File> getAllFiles(int limit) {
+        log.info("Поиск файлов. лимит = {}", limit);
+        return fileRepository.findFilesWithLimit(limit);
     }
 
     private static FileDto mapFile(File file) {

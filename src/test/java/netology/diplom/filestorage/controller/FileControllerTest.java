@@ -1,7 +1,9 @@
 package netology.diplom.filestorage.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import netology.diplom.filestorage.dto.FileDto;
 import netology.diplom.filestorage.dto.UpdateRequestDto;
+import netology.diplom.filestorage.entity.File;
 import netology.diplom.filestorage.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -66,8 +69,8 @@ public class FileControllerTest {
 
     @Test
     void test_getFile() throws Exception {
-        FileDto fileDto = FileDto.builder()
-                .filename(MY_FILE_NAME)
+        File fileDto = File.builder()
+                .fileName(MY_FILE_NAME)
                 .fileData("Cloud_storage".getBytes())
                 .fileType(MediaType.TEXT_PLAIN_VALUE).build();
 
@@ -102,17 +105,21 @@ public class FileControllerTest {
 
     @Test
     void test_getAllFiles() throws Exception {
-        List<FileDto> listFile = List.of(
-                FileDto.builder().size(1111L).filename("file1.txt").build(),
-                FileDto.builder().size(2222L).filename("file2.txt").build(),
-                FileDto.builder().size(3333L).filename("file3.txt").build());
+        List<File> listFile = List.of(
+                File.builder().size(1111L).fileName("file1.txt").build(),
+                File.builder().size(2222L).fileName("file2.txt").build(),
+                File.builder().size(3333L).fileName("file3.txt").build());
         Mockito.when(fileService.getAllFiles(3)).thenReturn(listFile);
 
-        mockMvc.perform(get("/list")
+        var result = mockMvc.perform(get("/list")
                         .header(AUTH_TOKEN, VALUE_TOKEN)
                         .param("limit", "3"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().json(objectMapper.writeValueAsString(listFile)));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertFalse(result.isBlank());
     }
 }

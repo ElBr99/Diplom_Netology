@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import netology.diplom.filestorage.dto.FileDto;
 import netology.diplom.filestorage.dto.UpdateRequestDto;
+import netology.diplom.filestorage.entity.File;
 import netology.diplom.filestorage.service.FileService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -42,11 +44,12 @@ public class FileController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
     public ResponseEntity<byte[]> getFile(@RequestParam("filename") String fileName) {
         log.info("Запрос файла для скачивания с сервера: {}", fileName);
-        FileDto fileDto = fileService.getFile(fileName);
+        File file = fileService.getFile(fileName);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(fileDto.getFileType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDto.getFilename() + "\"")
-                .body(fileDto.getFileData());
+                .contentType(MediaType.parseMediaType(file.getFileType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + file.getFileName() + "\"")
+                .body(file.getFileData());
     }
 
     @PutMapping("/file")
@@ -69,6 +72,18 @@ public class FileController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_USER')")
     public ResponseEntity<List<FileDto>> getAllFiles(@Min(1) @RequestParam int limit) {
         log.info("Запрос для получения списка файлов. Лимит: {}", limit);
-        return new ResponseEntity<>(fileService.getAllFiles(limit), HttpStatus.OK);
+        var fileDtoList = fileService.getAllFiles(limit)
+                .stream()
+                .map(FileController::mapFile)
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(fileDtoList, HttpStatus.OK);
+    }
+
+    private static FileDto mapFile(File file) {
+        return FileDto.builder()
+                .filename(file.getFileName())
+                .size(file.getSize())
+                .build();
     }
 }
